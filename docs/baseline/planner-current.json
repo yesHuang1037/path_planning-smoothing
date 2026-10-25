@@ -1,0 +1,250 @@
+{
+  ".vscode/c_cpp_properties.json": {
+    "sha256": "08557f52cf5d95c3a32ca16f94cbfa0940df6d2453586fd63548f6b1f898855a",
+    "mode": "0664"
+  },
+  ".vscode/settings.json": {
+    "sha256": "e8caf71cb222b268bbc6843e28bd844c73c2ef1b36147f539624646549b60981",
+    "mode": "0664"
+  },
+  "CMakeLists.txt": {
+    "sha256": "7e76551bb0e5e41e9ff64ab04bcfd4e68e3b1335f9338895a3e359cd6017868a",
+    "mode": "0664"
+  },
+  "PATH_SEARCHING_NO_PATH_GUIDE.md": {
+    "sha256": "6ea695c277725e65c383106ca3c61ef56c33ddbf61db980ce0e0f77ef220f20e",
+    "mode": "0664"
+  },
+  "benchmarks/esdf_benchmark.csv": {
+    "sha256": "d8bea50fa6dc61ed50c42f321a94ed2cc4c997378246c42f917827064d109c95",
+    "mode": "0664"
+  },
+  "cfg/plan_param.yaml": {
+    "sha256": "3613d5f637a15cdf84a029be152f7d40db4870a3d7f114b9b49c6d6645b789c2",
+    "mode": "0664"
+  },
+  "include/Astar.h": {
+    "sha256": "10fd4d648b2cc89bb2005ad76297d4c8385966f8e25cea652ca03d4698478c09",
+    "mode": "0664"
+  },
+  "include/bucketedqueue.h": {
+    "sha256": "397c0f5c2b330891a1536a78afe72c724056af5791fb37beab828ad02e0118f0",
+    "mode": "0664"
+  },
+  "include/cubic_spline/cpprobotics_types.h": {
+    "sha256": "bd2451ec71a333e6f530916584be06cd50d03715225381efaa73084b090b3ed9",
+    "mode": "0664"
+  },
+  "include/cubic_spline/cubic_spline.h": {
+    "sha256": "74b14cac626ccdb56e3b52103bcb9290f8e5cb0e5b412d4575ef661b662aaa1e",
+    "mode": "0664"
+  },
+  "include/cubic_spline/cubic_spline_ros.h": {
+    "sha256": "29393e63b4fd7566bc972eb3dc7a00187e18653d7aa69b4ea242954aead122aa",
+    "mode": "0664"
+  },
+  "include/dynamicvoronoi.h": {
+    "sha256": "c7057cf0b7dd9e863fba258014c410b037b705ce0f3a4aa840182058d2d5de3b",
+    "mode": "0664"
+  },
+  "include/esdf_map.h": {
+    "sha256": "7ef8f3dd68eabf1da28d5ab5e7310f41c76227674506724cf962c6560c2ae767",
+    "mode": "0664"
+  },
+  "include/path_searching/dynamic_obstacle_manager.h": {
+    "sha256": "907931d738f322b92e6e68a6474308294b4110ca7f36513051b685889098e878",
+    "mode": "0664"
+  },
+  "include/path_searching/grid_geometry.h": {
+    "sha256": "40209a9efc153b801c5ee9bda805830846f163a178070d55889812a5783fb227",
+    "mode": "0664"
+  },
+  "include/path_searching/path_safety_checker.h": {
+    "sha256": "05df04ddcb25281c8ec3a2ab735c13c218907ec8b8767c3890b224a82436f989",
+    "mode": "0664"
+  },
+  "include/path_searching/path_simplifier.h": {
+    "sha256": "b3df242623a171f6a9517f64db37401d287071d18658289f11b802e633552091",
+    "mode": "0664"
+  },
+  "include/path_searching/replan_coordinator.h": {
+    "sha256": "1996c6d27c900b121be42c9e386788c708c1860bb5ede6cdb3f3d0c4b496496a",
+    "mode": "0664"
+  },
+  "include/point.h": {
+    "sha256": "5ed76078cc1b21b24aec9d2ea24b16aaec12cb6ff6497b1239d369213647551e",
+    "mode": "0664"
+  },
+  "include/smoother.h": {
+    "sha256": "35dc6ce9641098f6fb441260de4f7222c74a40993759cd28554fe30ceccd369a",
+    "mode": "0664"
+  },
+  "include/ulitys.h": {
+    "sha256": "2e0ea5dd6b20d8e98ebf292cf2266655351178629e24886339fa5efe936860fd",
+    "mode": "0664"
+  },
+  "launch/astar.launch.py": {
+    "sha256": "ba9972fb71d2c313e342edb44063faee30f8c8eb2cfe752a120e69ef8e945e7b",
+    "mode": "0664"
+  },
+  "launch/astar_rviz_map_server.launch.py": {
+    "sha256": "dd7d7b9eaf460dd9dfee5193d2c354ab07fa64613905b435e23ea144342e12f5",
+    "mode": "0664"
+  },
+  "launch/debug_astar.launch.py": {
+    "sha256": "3d4f244e12e81d96ae02a43265273cbe3c53768656fa8f08ad0abf6975adf223",
+    "mode": "0664"
+  },
+  "launch/navion.launch.py": {
+    "sha256": "92695cdef8e6631a4ccec1484836a649f83fc3994a65205ecbfe7c2b74de2d62",
+    "mode": "0664"
+  },
+  "launch/voronoi_astar.launch.py": {
+    "sha256": "da09cf7939609884f2de1dd62d4d1554ae340e33078fa339c116230cfaee218d",
+    "mode": "0664"
+  },
+  "maps/chashuijian/map.pgm": {
+    "sha256": "e2305bae759bdc5acbdcc192a55b54dfd8c2605e4bb7adf513c8761fc2c68f6c",
+    "mode": "0664"
+  },
+  "maps/chashuijian/map.yaml": {
+    "sha256": "9a3920d7ef82fdc01156f1ce7782e6ef1437c6efb180f23d12c56f5cfaee9ca9",
+    "mode": "0664"
+  },
+  "maps/map.pgm": {
+    "sha256": "75fafe7c5a778747aff4bfe3aa67a59c712a87be386b81591897828b984b224c",
+    "mode": "0664"
+  },
+  "maps/map.yaml": {
+    "sha256": "e569e12d5ac71d30aba5ebbb63c49d8f6e9c7c4f766b27dc6940aa9eceef53ac",
+    "mode": "0664"
+  },
+  "maps/map_savat_20260410/map.pgm": {
+    "sha256": "c4b256afca4d03d79c6111da395a1ef6113e639588394421054635e125312e54",
+    "mode": "0664"
+  },
+  "maps/old_maps/dlio_map.pcd": {
+    "sha256": "917789c1c0725185ac4ea8d049818192c21fe2568c9ff511955ad168766ec5bb",
+    "mode": "0664"
+  },
+  "maps/old_maps/height_map.png": {
+    "sha256": "a8934904ee1acddf634253ae43f631ed65fd1a120203b7689063ec902ebd110a",
+    "mode": "0664"
+  },
+  "maps/old_maps/map.pgm": {
+    "sha256": "2b344bac8be3c41a37149dd69bba45acace6f4bb444d49095097e75beb82fc2a",
+    "mode": "0664"
+  },
+  "maps/old_maps/map.yaml": {
+    "sha256": "318b95016d8028b2cf6ffd34b377d38e020a52b948aac537cc93ce7eea96b8c6",
+    "mode": "0664"
+  },
+  "maps/old_maps/test.png": {
+    "sha256": "d7492c85bf7aee220d384811a4012198e3b8a8f2083cda8303cd4190c7bb0eac",
+    "mode": "0664"
+  },
+  "maps/rmul/map.pgm": {
+    "sha256": "d63aff781c645b26a2359859c667ca5cf347c90615c1a59277a419acbaef83a2",
+    "mode": "0664"
+  },
+  "maps/rmul/map.yaml": {
+    "sha256": "3151e51e244167ec4442860c2d1d804bd2d6bc7a1632af43eb8fdc68184d6c42",
+    "mode": "0664"
+  },
+  "maps/rmul/map1.pgm": {
+    "sha256": "c42181f014538c0e65961f735c1a073cbcc5287203caab926ac1725480672bfe",
+    "mode": "0664"
+  },
+  "maps/rmul/map1.yaml": {
+    "sha256": "18bde08cbe28f0297a87a74b0ba190188cd56c3dddfea4d9ac979c0948918fa8",
+    "mode": "0664"
+  },
+  "maps/test.png": {
+    "sha256": "996a6a64b33495f8d730febf0fa5d7e09d6e762a54a7cb28f4242420d56efb06",
+    "mode": "0664"
+  },
+  "obstacle_truncation_param_guide.md": {
+    "sha256": "d5b3ebe7572fb8f735d8f5ec8cb81745d9bde2a32a1047ed218198d48ea6b47a",
+    "mode": "0600"
+  },
+  "package.xml": {
+    "sha256": "194eb4da81f79f6652db78807d9aa915fb92d33c0d93605aa0d5cfe37f812f44",
+    "mode": "0664"
+  },
+  "path_searching_refactor_parameters.md": {
+    "sha256": "fbd87e94da0b5b8e19b3bb938908676ffb5265eb747c64b1b2588888960c7db6",
+    "mode": "0664"
+  },
+  "sim_maps/map.pgm": {
+    "sha256": "c1165b668d43f5d59ea79422e97c26f9fb5a490898215da6822e759c75840901",
+    "mode": "0664"
+  },
+  "sim_maps/map.yaml": {
+    "sha256": "3054f742093237ad429e20571ec8f01f2b47cfb823ddb12504d519c65f5963ed",
+    "mode": "0664"
+  },
+  "src/Astar.cpp": {
+    "sha256": "7471023947d1a5a6dfdecd4ff751987749ee29dfa97cc19cdc878fbb2a77f367",
+    "mode": "0664"
+  },
+  "src/benchmark_esdf.cpp": {
+    "sha256": "bab9f6b3e407f2b8e430652af83d86fcb952c8f7a3fd8744690045a3db2d7b6c",
+    "mode": "0664"
+  },
+  "src/bucketedqueue.cpp": {
+    "sha256": "8ba4af9d14d0083aea3d566a8033af3fdf6d5f16560af89d04d3fd463f8e958d",
+    "mode": "0664"
+  },
+  "src/dynamic_obstacle_manager.cpp": {
+    "sha256": "9f1b8fb94913ea57eab45b12dfa6286a2a873a17928a34564c1e579cc64b7018",
+    "mode": "0664"
+  },
+  "src/dynamicvoronoi.cpp": {
+    "sha256": "a5080a95311c95070f4db086005a5dd6ce78f2ed50dd9f7d330ec7b20a78f587",
+    "mode": "0664"
+  },
+  "src/esdf_map.cpp": {
+    "sha256": "43a72f83c626f10f42599ee60699e5cd87816e5111e868932e160381e6a03b3c",
+    "mode": "0664"
+  },
+  "src/path_safety_checker.cpp": {
+    "sha256": "b43cb87216183ff5e3f644c211c3221eb06538d79a40c7bd12b95a8a88d31178",
+    "mode": "0664"
+  },
+  "src/path_simplifier.cpp": {
+    "sha256": "45970ae54206820692377e1fe23ac162a418b023213b9830d90e5333e3d8fa64",
+    "mode": "0664"
+  },
+  "src/plan_manager.cpp": {
+    "sha256": "3d43cebbe5a39c3c7dc0e79ccbfaa572108b68f2a1f36c0e2d63a177826b69a4",
+    "mode": "0664"
+  },
+  "src/replan_coordinator.cpp": {
+    "sha256": "cb66d31a31984123d30422a0fe699a1e3eec5f1bea0987ac88ae9c7db0931b77",
+    "mode": "0664"
+  },
+  "src/smoother.cpp": {
+    "sha256": "d04d9dbd752a05d5f4010dd3bb1160be0fee5cd9793085a788e3d142e4fa1f9a",
+    "mode": "0664"
+  },
+  "test/astar_start_escape_test.cpp": {
+    "sha256": "23482a5be3eac3da66bdc6babaf362f03c7ac45958765f6dc583053d767941bd",
+    "mode": "0664"
+  },
+  "test/path_safety_checker_truncation_test.cpp": {
+    "sha256": "324c573d824bd178ed6d7818fe4b1b8480568362e9fceeca5df893676eea87a2",
+    "mode": "0664"
+  },
+  "test/path_simplifier_test.cpp": {
+    "sha256": "ccc7e626ae44f4b7c8dc893b18678b786e22d4ec2bdc34edbcc63fec10f1fab0",
+    "mode": "0664"
+  },
+  "test/replan_coordinator_periodic_test.cpp": {
+    "sha256": "85bcf150192392b43244c618845776e7a53e6224eca6a34dbcf1cbdcd12bca9e",
+    "mode": "0664"
+  },
+  "test/smoother_simplification_test.cpp": {
+    "sha256": "ab7385251c205b405231c2d8332f0c4719fd8407382c0869b7a64ee10b8e236e",
+    "mode": "0664"
+  }
+}

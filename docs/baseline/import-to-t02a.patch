@@ -1,0 +1,866 @@
+diff --git a/original/transplant_ws/src/path_searching/CMakeLists.txt b/current/transplant_ws/src/path_searching/CMakeLists.txt
+index c247489..7d4dca9 100644
+--- a/original/transplant_ws/src/path_searching/CMakeLists.txt
++++ b/current/transplant_ws/src/path_searching/CMakeLists.txt
+@@ -59,6 +59,7 @@ add_library(${PROJECT_NAME}_lib STATIC
+   src/dynamicvoronoi.cpp
+   src/esdf_map.cpp
+   src/path_safety_checker.cpp
++  src/path_simplifier.cpp
+   src/replan_coordinator.cpp
+   src/smoother.cpp
+ )
+@@ -102,6 +103,13 @@ install(DIRECTORY cfg
+ )
+ 
+ if(BUILD_TESTING)
++  add_executable(path_simplifier_test test/path_simplifier_test.cpp)
++  target_link_libraries(path_simplifier_test ${PROJECT_NAME}_lib)
++  add_test(NAME path_simplifier_test COMMAND path_simplifier_test)
++
++  add_executable(smoother_simplification_test test/smoother_simplification_test.cpp)
++  target_link_libraries(smoother_simplification_test ${PROJECT_NAME}_lib)
++  add_test(NAME smoother_simplification_test COMMAND smoother_simplification_test)
+   add_executable(replan_coordinator_periodic_test
+     test/replan_coordinator_periodic_test.cpp
+   )
+diff --git a/original/transplant_ws/src/path_searching/cfg/plan_param.yaml b/current/transplant_ws/src/path_searching/cfg/plan_param.yaml
+index 8256744..319134f 100644
+--- a/original/transplant_ws/src/path_searching/cfg/plan_param.yaml
++++ b/current/transplant_ws/src/path_searching/cfg/plan_param.yaml
+@@ -8,6 +8,8 @@
+     # global_monitor : 接收/监控动态障碍，但不因动态障碍主动重规划。
+     # global_only    : 纯全局规划，只在新目标等全局规划事件时规划，避障交给局部控制器。
+     avoidance_mode: global_monitor
++    path_simplification_mode: legacy
++    path_simplification_tolerance_m: 0.1
+ 
+     # ===================== [B] A* 搜索代价 =====================
+     # A* 对障碍距离的代价权重（越大越倾向远离障碍）
+diff --git a/current/transplant_ws/src/path_searching/include/path_searching/path_simplifier.h b/current/transplant_ws/src/path_searching/include/path_searching/path_simplifier.h
+new file mode 100644
+index 0000000..be67305
+--- /dev/null
++++ b/current/transplant_ws/src/path_searching/include/path_searching/path_simplifier.h
+@@ -0,0 +1,44 @@
++#ifndef PATH_SEARCHING_PATH_SIMPLIFIER_H_
++#define PATH_SEARCHING_PATH_SIMPLIFIER_H_
++
++#include "path_searching/grid_geometry.h"
++
++#include <functional>
++#include <string>
++#include <vector>
++
++namespace path_searching
++{
++
++class PathSimplifier
++{
++public:
++  using Path = std::vector<Eigen::Vector2d>;
++  using CellQuery = std::function<bool(const Eigen::Vector2i &)>;
++
++  enum class Status { Simplified, Unchanged, InvalidInput, InvalidEnvironment };
++
++  struct Result
++  {
++    Status status{Status::InvalidInput};
++    Path path;
++    std::string message;
++    bool valid() const
++    {
++      return status == Status::Simplified || status == Status::Unchanged;
++    }
++  };
++
++  explicit PathSimplifier(double tolerance_m = 0.1);
++  Result simplify(const Path &path, const GridGeometry &geometry, const CellQuery &query) const;
++  bool segmentPassable(
++    const Eigen::Vector2d &start, const Eigen::Vector2d &end,
++    const GridGeometry &geometry, const CellQuery &query) const;
++
++private:
++  double tolerance_m_;
++};
++
++}
++
++#endif
+diff --git a/original/transplant_ws/src/path_searching/include/smoother.h b/current/transplant_ws/src/path_searching/include/smoother.h
+index 9635775..b34022d 100644
+--- a/original/transplant_ws/src/path_searching/include/smoother.h
++++ b/current/transplant_ws/src/path_searching/include/smoother.h
+@@ -4,6 +4,8 @@
+ #include <Eigen/Core>
+ #include <vector>
+ #include "esdf_map.h"
++#include "path_searching/path_simplifier.h"
++#include <string>
+ 
+ namespace navi_planner {
+ class smoother{
+@@ -16,10 +18,18 @@ public:
+     void smoother_setEnvironment(ESDF_enviroment::Ptr esdf_ptr);
+     VV2D pathResampling(VV2D path_input);
+     bool isCollision(Eigen::Vector2d node1, Eigen::Vector2d node2);
++    void configureSimplification(const std::string &mode, double tolerance_m);
++    void setSimplificationEnvironment(
++        const path_searching::GridGeometry &geometry,
++        path_searching::PathSimplifier::CellQuery query);
+ private:
+     ESDF_enviroment::Ptr esdf_environment_;
++    bool use_tdt_simplification_{false};
++    path_searching::PathSimplifier simplifier_;
++    path_searching::GridGeometry simplification_geometry_;
++    path_searching::PathSimplifier::CellQuery simplification_query_;
+     
+ };
+ }
+ 
+-#endif
+\ No newline at end of file
++#endif
+diff --git a/current/transplant_ws/src/path_searching/src/path_simplifier.cpp b/current/transplant_ws/src/path_searching/src/path_simplifier.cpp
+new file mode 100644
+index 0000000..46e26f4
+--- /dev/null
++++ b/current/transplant_ws/src/path_searching/src/path_simplifier.cpp
+@@ -0,0 +1,228 @@
++#include "path_searching/path_simplifier.h"
++
++#include <algorithm>
++#include <cmath>
++#include <limits>
++#include <stdexcept>
++#include <utility>
++
++namespace path_searching
++{
++namespace
++{
++
++bool validGeometry(const GridGeometry &geometry)
++{
++  return geometry.valid() && std::isfinite(geometry.resolution()) &&
++    geometry.offset().allFinite();
++}
++
++bool gridPoint(
++  const Eigen::Vector2d &point, const GridGeometry &geometry, Eigen::Vector2d &grid)
++{
++  if (!point.allFinite())
++  {
++    return false;
++  }
++  grid = (point - geometry.offset()) / geometry.resolution();
++  return grid.allFinite() && grid.x() >= 0.0 && grid.y() >= 0.0 &&
++    grid.x() < geometry.size().y() && grid.y() < geometry.size().x();
++}
++
++bool onGridLine(double value)
++{
++  return std::abs(value - std::round(value)) <= 1e-10;
++}
++
++double segmentDistance(
++  const Eigen::Vector2d &point, const Eigen::Vector2d &start, const Eigen::Vector2d &end)
++{
++  const auto delta = (end - start).eval();
++  const double length = std::hypot(delta.x(), delta.y());
++  if (length == 0.0)
++  {
++    return std::hypot(point.x() - start.x(), point.y() - start.y());
++  }
++  const auto direction = (delta / length).eval();
++  const double distance = std::clamp((point - start).dot(direction), 0.0, length);
++  const auto error = (point - start - distance * direction).eval();
++  return std::hypot(error.x(), error.y());
++}
++
++}
++
++PathSimplifier::PathSimplifier(double tolerance_m) : tolerance_m_(tolerance_m)
++{
++  if (!std::isfinite(tolerance_m) || tolerance_m < 0.0)
++  {
++    throw std::invalid_argument("simplification tolerance must be finite and nonnegative");
++  }
++}
++
++bool PathSimplifier::segmentPassable(
++  const Eigen::Vector2d &start, const Eigen::Vector2d &end,
++  const GridGeometry &geometry, const CellQuery &query) const
++{
++  if (!validGeometry(geometry) || !query)
++  {
++    return false;
++  }
++  Eigen::Vector2d first;
++  Eigen::Vector2d last;
++  if (!gridPoint(start, geometry, first) || !gridPoint(end, geometry, last))
++  {
++    return false;
++  }
++  for (int axis = 0; axis < 2; ++axis)
++  {
++    if (onGridLine(first[axis])) first[axis] = std::round(first[axis]);
++    if (onGridLine(last[axis])) last[axis] = std::round(last[axis]);
++  }
++  const auto visit = [&](int row, int column) {
++    const Eigen::Vector2i cell(row, column);
++    return geometry.inBounds(cell) && query(cell);
++  };
++  const auto endpoint = [&](const Eigen::Vector2d &point) {
++    const int column = static_cast<int>(std::floor(point.x()));
++    const int row = static_cast<int>(std::floor(point.y()));
++    const int column_count = onGridLine(point.x()) ? 2 : 1;
++    const int row_count = onGridLine(point.y()) ? 2 : 1;
++    for (int row_offset = 0; row_offset < row_count; ++row_offset)
++    {
++      for (int column_offset = 0; column_offset < column_count; ++column_offset)
++      {
++        if (!visit(row - row_offset, column - column_offset)) return false;
++      }
++    }
++    return true;
++  };
++  if (!endpoint(first) || !endpoint(last)) return false;
++
++  int column = static_cast<int>(std::floor(first.x()));
++  int row = static_cast<int>(std::floor(first.y()));
++  const int end_column = static_cast<int>(std::floor(last.x()));
++  const int end_row = static_cast<int>(std::floor(last.y()));
++  const double delta_x = last.x() - first.x();
++  const double delta_y = last.y() - first.y();
++  const int step_column = (delta_x > 0.0) - (delta_x < 0.0);
++  const int step_row = (delta_y > 0.0) - (delta_y < 0.0);
++  const double infinity = std::numeric_limits<double>::infinity();
++  const double interval_x = step_column == 0 ? infinity : 1.0 / std::abs(delta_x);
++  const double interval_y = step_row == 0 ? infinity : 1.0 / std::abs(delta_y);
++  double crossing_x = step_column == 0 ? infinity :
++    ((step_column > 0 ? column + 1.0 : column) - first.x()) / delta_x;
++  double crossing_y = step_row == 0 ? infinity :
++    ((step_row > 0 ? row + 1.0 : row) - first.y()) / delta_y;
++  const bool vertical_boundary = step_column == 0 && onGridLine(first.x());
++  const bool horizontal_boundary = step_row == 0 && onGridLine(first.y());
++  const auto visit_segment_cell = [&](int cell_row, int cell_column) {
++    return visit(cell_row, cell_column) &&
++      (!vertical_boundary || visit(cell_row, cell_column - 1)) &&
++      (!horizontal_boundary || visit(cell_row - 1, cell_column)) &&
++      (!vertical_boundary || !horizontal_boundary || visit(cell_row - 1, cell_column - 1));
++  };
++  const int64_t limit = static_cast<int64_t>(geometry.size().x()) + geometry.size().y() + 4;
++  for (int64_t iteration = 0; iteration < limit; ++iteration)
++  {
++    if (!visit_segment_cell(row, column)) return false;
++    if (column == end_column && row == end_row) return true;
++    const bool corner = std::isfinite(crossing_x) && std::isfinite(crossing_y) &&
++      std::abs(crossing_x - crossing_y) <= 1e-12;
++    if (corner)
++    {
++      if (!visit(row, column + step_column) || !visit(row + step_row, column)) return false;
++      column += step_column;
++      row += step_row;
++      crossing_x += interval_x;
++      crossing_y += interval_y;
++    }
++    else if (crossing_x < crossing_y)
++    {
++      column += step_column;
++      crossing_x += interval_x;
++    }
++    else
++    {
++      row += step_row;
++      crossing_y += interval_y;
++    }
++  }
++  return false;
++}
++
++PathSimplifier::Result PathSimplifier::simplify(
++  const Path &path, const GridGeometry &geometry, const CellQuery &query) const
++{
++  if (!validGeometry(geometry) || !query)
++  {
++    return {Status::InvalidEnvironment, {}, "invalid grid geometry or missing cell query"};
++  }
++  if (path.empty()) return {Status::InvalidInput, {}, "empty input path"};
++  Path clean;
++  clean.reserve(path.size());
++  for (const auto &point : path)
++  {
++    Eigen::Vector2d grid;
++    if (!gridPoint(point, geometry, grid) ||
++      !(point - path.front()).allFinite() ||
++      !std::isfinite(std::hypot(point.x() - path.front().x(), point.y() - path.front().y())))
++    {
++      return {Status::InvalidInput, {}, "nonfinite, unrepresentable or out-of-map path point"};
++    }
++    if (clean.empty() || point != clean.back()) clean.push_back(point);
++  }
++  const auto finish = [&](Path output) {
++    const auto status = output.size() < path.size() ? Status::Simplified : Status::Unchanged;
++    return Result{status, std::move(output), "only new shortcuts are certified; retained edges are unchanged"};
++  };
++  if (clean.size() < 3) return finish(std::move(clean));
++
++  std::vector<bool> keep(clean.size(), false);
++  keep.front() = keep.back() = true;
++  std::vector<std::pair<size_t, size_t>> pending{{0, clean.size() - 1}};
++  while (!pending.empty())
++  {
++    const auto range = pending.back();
++    pending.pop_back();
++    if (range.second - range.first < 2) continue;
++    double maximum_distance = -1.0;
++    size_t split = range.first + 1;
++    for (size_t index = range.first + 1; index < range.second; ++index)
++    {
++      const double distance = segmentDistance(clean[index], clean[range.first], clean[range.second]);
++      if (!std::isfinite(distance)) return {Status::InvalidInput, {}, "path arithmetic overflow"};
++      if (distance > maximum_distance)
++      {
++        maximum_distance = distance;
++        split = index;
++      }
++    }
++    if (maximum_distance <= tolerance_m_ &&
++      segmentPassable(clean[range.first], clean[range.second], geometry, query)) continue;
++    if (maximum_distance <= 1e-12) split = range.first + (range.second - range.first) / 2;
++    keep[split] = true;
++    pending.emplace_back(range.first, split);
++    pending.emplace_back(split, range.second);
++  }
++  Path reduced;
++  for (size_t index = 0; index < clean.size(); ++index)
++  {
++    if (keep[index]) reduced.push_back(clean[index]);
++  }
++  Path output{reduced.front()};
++  size_t current = 0;
++  while (current + 1 < reduced.size())
++  {
++    size_t next = current + 1;
++    for (size_t candidate = current + 2; candidate < reduced.size(); ++candidate)
++    {
++      if (!segmentPassable(reduced[current], reduced[candidate], geometry, query)) break;
++      next = candidate;
++    }
++    output.push_back(reduced[next]);
++    current = next;
++  }
++  return finish(std::move(output));
++}
++
++}
+diff --git a/original/transplant_ws/src/path_searching/src/plan_manager.cpp b/current/transplant_ws/src/path_searching/src/plan_manager.cpp
+index 59b63f8..83e7bfa 100644
+--- a/original/transplant_ws/src/path_searching/src/plan_manager.cpp
++++ b/current/transplant_ws/src/path_searching/src/plan_manager.cpp
+@@ -39,6 +39,11 @@ public:
+     planner_1(),
+     smoother_1()
+   {  
++	    this->declare_parameter<std::string>("path_simplification_mode", "legacy");
++	    this->declare_parameter<double>("path_simplification_tolerance_m", 0.1);
++	    smoother_1.configureSimplification(
++	      this->get_parameter("path_simplification_mode").as_string(),
++	      this->get_parameter("path_simplification_tolerance_m").as_double());
+ 	    // 初始化ROS2相关参数
+ 	    this->declare_parameter<bool>("enable_downstairs", false);
+ 	    this->declare_parameter<std::string>("avoidance_mode", "global_replan");
+@@ -895,6 +900,13 @@ private:
+ 	    smoother_1.smoother_setEnvironment(esdf_1);
+ 	    dynamic_obstacle_manager_.setMap(grid_geometry_, esdf_1);
+ 	    path_safety_checker_.setMap(grid_geometry_, esdf_1, &dynamic_obstacle_manager_);
++	    smoother_1.setSimplificationEnvironment(grid_geometry_, [this](const Eigen::Vector2i &index) {
++	      if (!grid_geometry_.inBounds(index) || esdf_1->checkCollision(index)) return false;
++	      const Eigen::Vector2d center = grid_geometry_.indexToWorld(index) +
++	        Eigen::Vector2d::Constant(0.5 * grid_geometry_.resolution());
++	      const auto clearance = path_safety_checker_.clearanceAt(center);
++	      return clearance.valid && clearance.safe;
++	    });
+ 
+ 	    map_geted = true;
+   }
+@@ -1085,7 +1097,18 @@ private:
+ 
+     beforeTime = std::chrono::steady_clock::now();
+     std::vector<Eigen::Vector2d> raw_path = Path_2d;
+-    Path_2d = smoother_1.smooth(Path_2d, 0.3f, 0.04f);
++    try
++    {
++      Path_2d = smoother_1.smooth(Path_2d, 0.3f, 0.04f);
++    }
++    catch (const std::exception &error)
++    {
++      RCLCPP_ERROR(this->get_logger(), "Path processing rejected: %s", error.what());
++      planner_1.reset();
++      msg.data = false;
++      reachable_pub_->publish(msg);
++      return;
++    }
+     endTime = std::chrono::steady_clock::now();
+     duration_millsecond = std::chrono::duration<double, std::milli>(endTime - beforeTime).count();
+     std::cout << "Smooth cost: " << duration_millsecond << "ms" << std::endl;
+diff --git a/original/transplant_ws/src/path_searching/src/smoother.cpp b/current/transplant_ws/src/path_searching/src/smoother.cpp
+index 193b602..d2ac79c 100644
+--- a/original/transplant_ws/src/path_searching/src/smoother.cpp
++++ b/current/transplant_ws/src/path_searching/src/smoother.cpp
+@@ -1,8 +1,27 @@
+ #include "smoother.h"
+ #include "cubic_spline/cubic_spline_ros.h"
++#include <stdexcept>
++#include <utility>
+ 
+ namespace navi_planner {
+ 
++    void smoother::configureSimplification(const std::string &mode, double tolerance_m)
++    {
++        if (mode != "legacy" && mode != "tdt")
++            throw std::invalid_argument("path_simplification_mode must be legacy or tdt");
++        path_searching::PathSimplifier validated(tolerance_m);
++        simplifier_ = validated;
++        use_tdt_simplification_ = mode == "tdt";
++    }
++
++    void smoother::setSimplificationEnvironment(
++        const path_searching::GridGeometry &geometry,
++        path_searching::PathSimplifier::CellQuery query)
++    {
++        simplification_geometry_ = geometry;
++        simplification_query_ = std::move(query);
++    }
++
+     smoother::VV2D smoother::smooth(smoother::VV2D path_input, 
+     double lambda_1 , double lambda_2)
+     {
+@@ -13,6 +32,18 @@ namespace navi_planner {
+         // double lambda2 = 3;
+         double Obs_thre = 10;
+ 
++        if (use_tdt_simplification_)
++        {
++            if (!std::isfinite(lambda_1) || !std::isfinite(lambda_2) ||
++                lambda_1 < 0.0 || lambda_2 < 0.0)
++                throw std::invalid_argument("smoothing weights must be finite and nonnegative");
++            Path_d = pathResampling(path_input);
++            if (Path_d.size() == 1) return Path_d;
++            if (!esdf_environment_)
++                throw std::runtime_error("smoothing ESDF environment is missing");
++        }
++        else
++        {
+         for(int j = 0 ; j < newPath.size();j+=1)
+         {
+             Eigen::Vector2d Node_ = Eigen::Vector2d(newPath[j][0],newPath[j][1]);
+@@ -21,6 +52,7 @@ namespace navi_planner {
+         Path_d.push_back(Eigen::Vector2d(newPath.back()[0],newPath.back()[1]));
+         std::vector<Eigen::Vector2d> KeyPoints = pathResampling(Path_d);
+         Path_d = KeyPoints;
++        }
+ 
+         for(int i = 0; i < 10 ; i++)
+         {
+@@ -116,6 +148,13 @@ namespace navi_planner {
+     }
+     smoother::VV2D smoother::pathResampling(smoother::VV2D path_input)
+     {
++        if (use_tdt_simplification_)
++        {
++            auto result = simplifier_.simplify(
++                path_input, simplification_geometry_, simplification_query_);
++            if (!result.valid()) throw std::runtime_error(result.message);
++            return result.path;
++        }
+         int j = 1;
+         std::vector<Eigen::Vector2d> KeyPoints;
+         KeyPoints.push_back(path_input[0]);
+@@ -161,4 +200,4 @@ namespace navi_planner {
+         esdf_environment_ = esdf_ptr;
+     }
+     
+-}
+\ No newline at end of file
++}
+diff --git a/current/transplant_ws/src/path_searching/test/path_simplifier_test.cpp b/current/transplant_ws/src/path_searching/test/path_simplifier_test.cpp
+new file mode 100644
+index 0000000..38fb6a0
+--- /dev/null
++++ b/current/transplant_ws/src/path_searching/test/path_simplifier_test.cpp
+@@ -0,0 +1,244 @@
++#include "path_searching/path_simplifier.h"
++
++#include <iostream>
++#include <chrono>
++#include <cmath>
++#include <fstream>
++#include <limits>
++#include <random>
++#include <set>
++#include <stdexcept>
++
++void require(bool condition, const std::string &message)
++{
++  if (!condition)
++  {
++    throw std::runtime_error(message);
++  }
++}
++
++using Simplifier = path_searching::PathSimplifier;
++using Path = Simplifier::Path;
++
++bool intersectsCell(
++  const Eigen::Vector2d &start, const Eigen::Vector2d &end, int row, int column)
++{
++  double lower = 0.0;
++  double upper = 1.0;
++  for (int axis = 0; axis < 2; ++axis)
++  {
++    const double minimum = axis == 0 ? column : row;
++    const double delta = end[axis] - start[axis];
++    if (delta == 0.0)
++    {
++      if (start[axis] < minimum || start[axis] > minimum + 1.0) return false;
++      continue;
++    }
++    double entry = (minimum - start[axis]) / delta;
++    double exit = (minimum + 1.0 - start[axis]) / delta;
++    if (entry > exit) std::swap(entry, exit);
++    lower = std::max(lower, entry);
++    upper = std::min(upper, exit);
++    if (lower > upper + 1e-12) return false;
++  }
++  return true;
++}
++
++void checkContract(const Path &input, const Simplifier::Result &result)
++{
++  require(result.valid(), "expected valid simplification result");
++  require(!result.path.empty() && result.path.size() <= input.size(), "invalid output size");
++  require(result.path.front() == input.front() && result.path.back() == input.back(), "endpoint changed");
++  size_t cursor = 0;
++  for (const auto &point : result.path)
++  {
++    require(point.allFinite(), "nonfinite output");
++    while (cursor < input.size() && input[cursor] != point) ++cursor;
++    require(cursor < input.size(), "output must be an ordered input subsequence");
++    ++cursor;
++  }
++}
++
++int main(int argc, char **argv)
++{
++  try
++  {
++  const path_searching::GridGeometry geometry({20, 20}, {-1.0, -1.0}, 0.05);
++  const path_searching::PathSimplifier::Path input{
++    {-0.875, -0.875}, {-0.775, -0.875}, {-0.675, -0.875}, {-0.575, -0.875}};
++  const auto result = path_searching::PathSimplifier().simplify(
++    input, geometry, [](const Eigen::Vector2i &) { return true; });
++  require(result.valid(), "straight path must be valid");
++  require(result.path.size() == 2, "straight path must reduce to endpoints");
++  require(result.path.front() == input.front(), "start must be preserved");
++  require(result.path.back() == input.back(), "end must be preserved");
++  std::cout << "PASS straight path\n";
++  const path_searching::PathSimplifier::Path detour{
++    {-0.775, -0.775}, {-0.575, -0.775}, {-0.575, -0.575}};
++  const auto blocked = path_searching::PathSimplifier().simplify(
++    detour, geometry, [](const Eigen::Vector2i &cell) {
++      return cell != Eigen::Vector2i(6, 6);
++    });
++  require(blocked.path.size() == 3, "shortcut through obstacle must retain detour");
++  std::cout << "PASS blocked shortcut\n";
++  const Simplifier simplifier;
++  const auto free_cell = [](const Eigen::Vector2i &) { return true; };
++  const auto center = [&](int row, int column) {
++    return (geometry.indexToWorld({row, column}) + Eigen::Vector2d::Constant(0.025)).eval();
++  };
++  const Path direct{center(4, 4), center(8, 8)};
++  require(!simplifier.segmentPassable(direct.front(), direct.back(), geometry,
++    [](const Eigen::Vector2i &cell) { return cell != Eigen::Vector2i(5, 4); }),
++    "diagonal corner must include touching side cell");
++  const Eigen::Vector2d boundary_start(-0.75, -0.875);
++  const Eigen::Vector2d boundary_end(-0.75, -0.575);
++  require(!simplifier.segmentPassable(boundary_start, boundary_end, geometry,
++    [](const Eigen::Vector2i &cell) { return cell != Eigen::Vector2i(6, 4); }),
++    "grid-line segment must check both sides");
++  require(!simplifier.segmentPassable(center(5, 5), center(5, 5) + Eigen::Vector2d(0.001, 0),
++    geometry, [](const Eigen::Vector2i &) { return false; }), "short blocked line must fail");
++  require(!simplifier.segmentPassable(center(4, 4), center(8, 8), geometry,
++    [](const Eigen::Vector2i &cell) { return cell != Eigen::Vector2i(4, 4); }),
++    "occupied endpoint must fail");
++  require(!simplifier.segmentPassable({-1.0, -0.8}, {-1.0, -0.6}, geometry, free_cell),
++    "touching outside map must fail");
++  std::cout << "PASS corners, grid lines, endpoints and short segments\n";
++
++  for (double resolution : {0.025, 0.1})
++  {
++    const path_searching::GridGeometry alternate({20, 20}, {-2.0, -3.0}, resolution);
++    const auto alternate_center = [&](int column) {
++      return (alternate.indexToWorld({10, column}) +
++        Eigen::Vector2d::Constant(resolution / 2.0)).eval();
++    };
++    const Path corridor{alternate_center(3), alternate_center(8), alternate_center(14)};
++    const auto narrow = simplifier.simplify(corridor, alternate,
++      [](const Eigen::Vector2i &cell) { return cell.x() == 10; });
++    checkContract(corridor, narrow);
++    require(narrow.path.size() == 2, "free narrow corridor rejected at alternate resolution");
++    require(!simplifier.segmentPassable(corridor.front(), corridor.back(), alternate,
++      [](const Eigen::Vector2i &cell) { return cell.x() == 10 && cell.y() != 9; }),
++      "blocked narrow corridor accepted");
++  }
++  std::cout << "PASS narrow corridor at 0.025m/0.1m (simplifier module only)\n";
++
++  for (double tolerance : {-1.0, std::numeric_limits<double>::infinity(),
++    std::numeric_limits<double>::quiet_NaN()})
++  {
++    bool rejected = false;
++    try { Simplifier invalid(tolerance); }
++    catch (const std::invalid_argument &) { rejected = true; }
++    require(rejected, "invalid tolerance accepted");
++  }
++  require(!simplifier.simplify({}, geometry, free_cell).valid(), "empty input accepted");
++  for (double coordinate : {std::numeric_limits<double>::quiet_NaN(),
++    std::numeric_limits<double>::infinity(), std::numeric_limits<double>::max(), -1.1, 0.0})
++  {
++    require(!simplifier.simplify({{coordinate, -0.8}}, geometry, free_cell).valid(),
++      "invalid path coordinate accepted");
++  }
++  require(!simplifier.simplify(input, {}, free_cell).valid(), "missing geometry accepted");
++  require(!simplifier.simplify(input, geometry, {}).valid(), "missing query accepted");
++  require(!simplifier.simplify(input,
++    {{20, 20}, {-1, -1}, std::numeric_limits<double>::infinity()}, free_cell).valid(),
++    "nonfinite resolution accepted");
++  require(!simplifier.simplify(input,
++    {{20, 20}, {std::numeric_limits<double>::quiet_NaN(), -1}, 0.05}, free_cell).valid(),
++    "nonfinite origin accepted");
++  std::cout << "PASS invalid parameters, inputs and environments\n";
++
++  checkContract({input.front()}, simplifier.simplify({input.front()}, geometry, free_cell));
++  checkContract(direct, simplifier.simplify(direct, geometry, free_cell));
++  const Path duplicates{input.front(), input.front(), input.back(), input.back()};
++  checkContract(duplicates, simplifier.simplify(duplicates, geometry, free_cell));
++  require(simplifier.simplify({input.front(), input.front()}, geometry, free_cell).path.size() == 1,
++    "all duplicates must reduce to one point");
++  checkContract(input, Simplifier(0.0).simplify(input, geometry, free_cell));
++  std::cout << "PASS short paths, duplicates and zero tolerance\n";
++
++  bool dynamic_obstacle = true;
++  const auto dynamic_query = [&](const Eigen::Vector2i &cell) {
++    return !dynamic_obstacle || cell != Eigen::Vector2i(6, 6);
++  };
++  require(simplifier.simplify(detour, geometry, dynamic_query).path.size() == 3,
++    "dynamic obstacle ignored");
++  dynamic_obstacle = false;
++  require(simplifier.simplify(detour, geometry, dynamic_query).path.size() == 2,
++    "cleared obstacle remains cached");
++  dynamic_obstacle = true;
++  require(simplifier.simplify(detour, geometry, dynamic_query).path.size() == 3,
++    "reappearing obstacle ignored");
++  const auto escape = simplifier.simplify(input, geometry,
++    [](const Eigen::Vector2i &) { return false; });
++  require(escape.valid() && escape.path.size() == input.size(),
++    "unsafe original edges must be retained without new shortcuts");
++  std::cout << "PASS dynamic appearance/clearance and escape preservation\n";
++
++  std::mt19937 generator(20261024);
++  std::uniform_int_distribution<int> coordinate(2, 17);
++  for (int trial = 0; trial < 160; ++trial)
++  {
++    Eigen::Vector2d first(coordinate(generator) + 0.5, coordinate(generator) + 0.5);
++    Eigen::Vector2d last(coordinate(generator) + 0.5, coordinate(generator) + 0.5);
++    if (trial % 4 == 0) first.x() = std::floor(first.x());
++    if (trial % 5 == 0) last.y() = std::floor(last.y());
++    std::set<std::pair<int, int>> touched;
++    const auto collect = [&](const Eigen::Vector2i &cell) {
++      touched.emplace(cell.x(), cell.y());
++      return true;
++    };
++    require(simplifier.segmentPassable((first * 0.05 + geometry.offset()).eval(),
++      (last * 0.05 + geometry.offset()).eval(), geometry, collect), "free segment rejected");
++    for (int row = 0; row < 20; ++row)
++    {
++      for (int column = 0; column < 20; ++column)
++      {
++        if (intersectsCell(first, last, row, column))
++          require(touched.count({row, column}) > 0, "supercover missed an oracle cell");
++      }
++    }
++    std::set<std::pair<int, int>> reversed;
++    require(simplifier.segmentPassable((last * 0.05 + geometry.offset()).eval(),
++      (first * 0.05 + geometry.offset()).eval(), geometry,
++      [&](const Eigen::Vector2i &cell) { reversed.emplace(cell.x(), cell.y()); return true; }),
++      "reversed free segment rejected");
++    require(touched == reversed, "segment coverage must be direction independent");
++  }
++  std::cout << "PASS 160 seeded coverage cases against closed-cell intersection oracle\n";
++
++  Path long_path;
++  for (int index = 0; index < 5000; ++index)
++    long_path.emplace_back(-0.875 + 0.5 * index / 4999.0, -0.875);
++  const auto begin = std::chrono::steady_clock::now();
++  const auto long_result = simplifier.simplify(long_path, geometry, free_cell);
++  checkContract(long_path, long_result);
++  require(long_result.path.size() == 2, "long straight path not simplified");
++  std::cout << "PASS long path: 5000 -> 2, elapsed_ms=" <<
++    std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count() << '\n';
++
++  if (argc == 3 && std::string(argv[1]) == "--export")
++  {
++    std::ofstream output(argv[2]);
++    if (!output) throw std::runtime_error("cannot write observation CSV");
++    output << "case,kind,x,y\n";
++    const auto export_path = [&](const std::string &name, const std::string &kind, const Path &points) {
++      for (const auto &point : points)
++        output << name << ',' << kind << ',' << point.x() << ',' << point.y() << '\n';
++    };
++    export_path("free", "input", input);
++    export_path("free", "output", result.path);
++    export_path("blocked", "input", detour);
++    export_path("blocked", "output", blocked.path);
++    export_path("blocked", "obstacle", {center(6, 6)});
++    export_path("cleared", "input", detour);
++    export_path("cleared", "output", simplifier.simplify(detour, geometry, free_cell).path);
++    std::cout << "EXPORTED " << argv[2] << '\n';
++  }
++  return 0;
++  }
++  catch (const std::exception &error)
++  {
++    std::cerr << "FAIL " << error.what() << '\n';
++    return 1;
++  }
++}
+diff --git a/current/transplant_ws/src/path_searching/test/smoother_simplification_test.cpp b/current/transplant_ws/src/path_searching/test/smoother_simplification_test.cpp
+new file mode 100644
+index 0000000..c54bcba
+--- /dev/null
++++ b/current/transplant_ws/src/path_searching/test/smoother_simplification_test.cpp
+@@ -0,0 +1,123 @@
++#include "smoother.h"
++#include "path_searching/path_safety_checker.h"
++
++#include <cmath>
++#include <chrono>
++#include <iostream>
++#include <limits>
++#include <memory>
++#include <stdexcept>
++
++namespace
++{
++void require(bool condition, const char *message)
++{
++  if (!condition) throw std::runtime_error(message);
++}
++
++template<typename Operation>
++void mustReject(Operation operation)
++{
++  bool rejected = false;
++  try { operation(); }
++  catch (const std::exception &) { rejected = true; }
++  require(rejected, "invalid request was silently accepted");
++}
++}
++
++int main()
++{
++  try
++  {
++    const path_searching::GridGeometry geometry(
++      Eigen::Vector2i(80, 80), Eigen::Vector2d(-2.0, -2.0), 0.05);
++    auto occupancy = std::make_unique<bool[]>(80 * 80);
++    for (int index = 0; index < 80 * 80; ++index) occupancy[index] = false;
++    occupancy[40 * 80 + 40] = true;
++    ESDF_enviroment::Ptr esdf(new ESDF_enviroment::esdf(), [](ESDF_enviroment::esdf *) {});
++    esdf->esdf_init(occupancy.get(), 80, 80, geometry.offset(), false);
++
++    path_searching::PathSafetyChecker checker;
++    path_searching::PathSafetyChecker::Config config;
++    config.robot_inscribed_radius = 0.08;
++    config.clearance_margin = 0.0;
++    checker.configure(config);
++    checker.setMap(geometry, esdf, nullptr);
++    const auto cell_query = [&](const Eigen::Vector2i &cell) {
++      if (!geometry.inBounds(cell) || esdf->checkCollision(cell)) return false;
++      const auto clearance = checker.clearanceAt(
++        geometry.indexToWorld(cell) + Eigen::Vector2d::Constant(0.025));
++      return clearance.valid && clearance.safe;
++    };
++    navi_planner::smoother default_legacy;
++    navi_planner::smoother explicit_legacy;
++    default_legacy.smoother_setEnvironment(esdf);
++    explicit_legacy.smoother_setEnvironment(esdf);
++    explicit_legacy.configureSimplification("legacy", 0.1);
++    const navi_planner::smoother::VV2D path{
++      {-0.975, -0.975}, {-0.725, -0.725}, {-0.475, -0.475}, {-0.225, -0.225}};
++    const auto default_result = default_legacy.pathResampling(path);
++    const auto explicit_result = explicit_legacy.pathResampling(path);
++    require(default_result == explicit_result, "legacy preprocessing changed");
++    const auto default_smooth = default_legacy.smooth(path, 0.3, 0.04);
++    require(default_smooth == explicit_legacy.smooth(path, 0.3, 0.04),
++      "default and explicit legacy smoothing differ");
++    std::cout << "PASS default/explicit legacy preprocessing and smoothing equivalence\n";
++
++    navi_planner::smoother candidate;
++    mustReject([&] { candidate.configureSimplification("unknown", 0.1); });
++    mustReject([&] { candidate.configureSimplification("legacy", -1.0); });
++    mustReject([&] { candidate.configureSimplification("tdt", std::numeric_limits<double>::infinity()); });
++    mustReject([&] { candidate.configureSimplification("tdt", std::numeric_limits<double>::quiet_NaN()); });
++    candidate.configureSimplification("tdt", 0.1);
++    mustReject([&] { candidate.pathResampling(path); });
++    candidate.setSimplificationEnvironment(geometry, cell_query);
++    mustReject([&] { candidate.smooth(path); });
++    candidate.smoother_setEnvironment(esdf);
++    mustReject([&] { candidate.smooth({}); });
++    mustReject([&] { candidate.pathResampling({{3.0, 3.0}}); });
++    mustReject([&] { candidate.pathResampling({{std::numeric_limits<double>::quiet_NaN(), 0.0}}); });
++    mustReject([&] { candidate.smooth(path, -0.1, 0.1); });
++    require(candidate.pathResampling(path).size() == 2, "free chord not integrated");
++    const navi_planner::smoother::VV2D singleton{path.front()};
++    require(candidate.smooth({path.front(), path.front()}) == singleton,
++      "duplicate singleton handling failed");
++    const auto smoothed = candidate.smooth(path, 0.3, 0.04);
++    require(!smoothed.empty(), "tdt smoothing output empty");
++    for (const auto &point : smoothed) require(point.allFinite(), "tdt smoothing output nonfinite");
++    std::cout << "PASS configuration, explicit failures, duplicates and retained spline integration\n";
++
++    const navi_planner::smoother::VV2D detour{
++      {-0.475, 0.025}, {0.025, -0.475}, {0.525, 0.025}};
++    require(candidate.pathResampling(detour).size() == 3, "occupied shortcut accepted");
++    const navi_planner::smoother::VV2D clearance_detour{
++      {-0.475, 0.075}, {0.025, 0.525}, {0.525, 0.075}};
++    require(candidate.pathResampling(clearance_detour).size() == 3, "unsafe clearance shortcut accepted");
++    config.robot_inscribed_radius = 0.0;
++    checker.configure(config);
++    require(candidate.pathResampling(clearance_detour).size() == 2,
++      "current clearance configuration not observed");
++    std::cout << "PASS real ESDF collision and current PathSafetyChecker clearance reuse\n";
++    navi_planner::smoother::VV2D benchmark_path;
++    for (int index = 0; index < 5000; ++index)
++      benchmark_path.emplace_back(-1.475 + index / 4999.0, -1.475);
++    const auto measure = [&](navi_planner::smoother &implementation, const char *label) {
++      const auto start = std::chrono::steady_clock::now();
++      size_t output_size = 0;
++      for (int repeat = 0; repeat < 30; ++repeat)
++        output_size = implementation.pathResampling(benchmark_path).size();
++      const double mean_ms = std::chrono::duration<double, std::milli>(
++        std::chrono::steady_clock::now() - start).count() / 30.0;
++      std::cout << "OBSERVE " << label << " points=5000->" << output_size <<
++        " mean_ms=" << mean_ms << " repeats=30 (preprocessing only)\n";
++    };
++    measure(default_legacy, "legacy");
++    measure(candidate, "tdt");
++    return 0;
++  }
++  catch (const std::exception &error)
++  {
++    std::cerr << "FAIL " << error.what() << '\n';
++    return 1;
++  }
++}

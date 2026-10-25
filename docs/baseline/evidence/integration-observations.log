@@ -1,0 +1,5 @@
+PASS default/explicit legacy preprocessing and smoothing equivalence
+PASS configuration, explicit failures, duplicates and retained spline integration
+PASS real ESDF collision and current PathSafetyChecker clearance reuse
+OBSERVE legacy points=5000->3 mean_ms=26.4503 repeats=30 (preprocessing only)
+OBSERVE tdt points=5000->2 mean_ms=10.0342 repeats=30 (preprocessing only)

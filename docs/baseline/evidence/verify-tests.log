@@ -1,0 +1,16 @@
+Internal ctest changing into directory: /home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching
+Test project /home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching
+    Start 1: path_simplifier_test
+1/5 Test #1: path_simplifier_test ..................   Passed    0.02 sec
+    Start 2: smoother_simplification_test
+2/5 Test #2: smoother_simplification_test ..........   Passed    1.26 sec
+    Start 3: replan_coordinator_periodic_test
+3/5 Test #3: replan_coordinator_periodic_test ......   Passed    0.00 sec
+    Start 4: path_safety_checker_truncation_test
+4/5 Test #4: path_safety_checker_truncation_test ...   Passed    0.16 sec
+    Start 5: astar_start_escape_test
+5/5 Test #5: astar_start_escape_test ...............   Passed    0.20 sec
+
+100% tests passed, 0 tests failed out of 5
+
+Total Test time (real) =   1.65 sec

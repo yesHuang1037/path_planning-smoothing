@@ -1,0 +1,11 @@
+Starting >>> path_searching
+[ 41%] Built target path_searching_lib
+Consolidate compiler generated dependencies of target path_simplifier_test
+[ 50%] Built target replan_coordinator_periodic_test
+[ 58%] Built target path_simplifier_test
+[ 66%] Built target astar_start_escape_test
+[ 83%] Built target esdf_benchmark
+[ 75%] Built target path_safety_checker_truncation_test
+[ 91%] Built target smoother_simplification_test
+[100%] Built target plan_manager
+colcon_exit=124

@@ -1,0 +1,12 @@
+Internal ctest changing into directory: /home/hustlyrm/path_planning_transplant/transplant_ws/build-baseline/path_searching
+Test project /home/hustlyrm/path_planning_transplant/transplant_ws/build-baseline/path_searching
+    Start 1: replan_coordinator_periodic_test
+1/3 Test #1: replan_coordinator_periodic_test ......   Passed    0.00 sec
+    Start 2: path_safety_checker_truncation_test
+2/3 Test #2: path_safety_checker_truncation_test ...   Passed    0.20 sec
+    Start 3: astar_start_escape_test
+3/3 Test #3: astar_start_escape_test ...............   Passed    0.19 sec
+
+100% tests passed, 0 tests failed out of 3
+
+Total Test time (real) =   0.40 sec

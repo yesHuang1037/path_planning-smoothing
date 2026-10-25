@@ -1,0 +1,12 @@
+ M README.md
+ M src/mpc_follower/cfg/mpc_params.yaml
+ M src/mpc_follower/include/mpc_controller.h
+ M src/mpc_follower/src/mpc_controller.cpp
+ M src/path_searching/cfg/plan_param.yaml
+ M src/region_detector/cfg/region.yaml
+ M src/speed_manager/cfg/speed.yaml
+4a5cef0897111ac1a8caca683869a04fc5e99750bbe766f78c1f61a1f3be3e54  -
+ea33e6629165b0984f2cd866e8e62c7926f98b3e6b81d01563de2b5a3e9aba17  -
+de69003aa42e153ea4d9e9e04efa82d2cd0472ee2e803c99517b65988d321d5e  -
+PASS original planner manifest unchanged: 58 files
+PASS observation SVG XML parses (not a visual review)

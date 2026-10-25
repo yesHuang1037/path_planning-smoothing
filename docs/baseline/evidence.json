@@ -1,0 +1,102 @@
+{
+  "baseline-direct-build.log": {
+    "sha256": "3a6cb1e17a7df8339e9263092c683cab10d1c63b75a02670b8a9d1db9d71ef35",
+    "mode": "0664"
+  },
+  "baseline-tests.log": {
+    "sha256": "dffebd054b63d7eeb488dbd85389bcaeb4e45d521cc766d39a1b39c04beac618",
+    "mode": "0664"
+  },
+  "build.log": {
+    "sha256": "d04733e5ff04f227c10dcb9ea24ba2fc2606f05da377e9cb6020365727c2b8bd",
+    "mode": "0664"
+  },
+  "colcon-final.log": {
+    "sha256": "cc174205116898eb26b8865c3c567bd74f72e2873f34a4825b793de96ecc876f",
+    "mode": "0664"
+  },
+  "colcon-sandbox.log": {
+    "sha256": "36b95bab36de6aa94716ff6cb9337aeefd21c392192aedefd7fb3ae1446ec409",
+    "mode": "0664"
+  },
+  "green-obstacle.log": {
+    "sha256": "1802fb414cd25757d860107747b0dfa2e163a66e6d1830fa987772de705b69ed",
+    "mode": "0664"
+  },
+  "green-straight.log": {
+    "sha256": "d2e07721cd407047ea1b1bb1f977a915fa03005c521029a5ab896b5ed1ca6f83",
+    "mode": "0664"
+  },
+  "integration-observations.log": {
+    "sha256": "bc35f04eb752e490f6dca5fd29d17a3f0fcc45c662da52ca59e2f82880a423c7",
+    "mode": "0664"
+  },
+  "navigation-diff.before.sha256": {
+    "sha256": "95b00e9d1084afae9e78197c825b1e3afa5491b72a979cafa8715eb910105357",
+    "mode": "0664"
+  },
+  "navigation-status.before.txt": {
+    "sha256": "3a7d21e5d2061802867964caa899922992b9159b4702856cd9f1eaa8ba29c595",
+    "mode": "0664"
+  },
+  "observations.csv": {
+    "sha256": "dcc564d453a4290625838984e9a8a0e666cf23a2548f6d60eec618edaede3575",
+    "mode": "0664"
+  },
+  "observations.log": {
+    "sha256": "6bcb22576d960913af90d0bbef9e03791aecd16858b3833d14d8614f4edd276e",
+    "mode": "0664"
+  },
+  "observations.svg": {
+    "sha256": "77197dd4d38f87f0894d5b5f04987d0f53d13ef3c1647b602a92eba4c84ab754",
+    "mode": "0664"
+  },
+  "package.before.sha256": {
+    "sha256": "7999c13db7fb2cac9bdccace506d157674c85c0a8ec036398d4918a6ac98bf9e",
+    "mode": "0664"
+  },
+  "preservation.log": {
+    "sha256": "f52615cec7381e6ee330b0a9a4021d4dfe1800e5e2bd3b54d091bc519cd4d9ed",
+    "mode": "0664"
+  },
+  "red-obstacle.log": {
+    "sha256": "6539c823de2e029ba5b6b1278e02a71c432f86af33b2791cd36446b4dae0f6d2",
+    "mode": "0664"
+  },
+  "red-straight.log": {
+    "sha256": "e141956fe95d1267434383d84abe9ba3b965ffd0f6efea30ad943009e5d70cc1",
+    "mode": "0664"
+  },
+  "render.log": {
+    "sha256": "aa8e0ec716c6e2b818db10c8bb91deb6a1ed8f6d32306662a7da54f50b42a75f",
+    "mode": "0664"
+  },
+  "sanitizers-outside-sandbox.log": {
+    "sha256": "8abda98a056afb7064e8ea1d390d933cf1e1306c76aea38172add6813366e81b",
+    "mode": "0664"
+  },
+  "sanitizers.log": {
+    "sha256": "bc272f80d67cdf4b240b98f7f22b23293cafd66ee0588cbd3bc17a7cbac5af45",
+    "mode": "0664"
+  },
+  "slam-diff.before.sha256": {
+    "sha256": "d29c1c55f7da6b94e1ef837bfb27b2f8f60613e9ba7b442a5eaa49b0f1c33dc2",
+    "mode": "0664"
+  },
+  "tdt-diff.before.sha256": {
+    "sha256": "a4d602423baef3028c52dade040d70e33c14006048353e9c0ceab7cb6b680a09",
+    "mode": "0664"
+  },
+  "verify-build.log": {
+    "sha256": "b137a84be1d5baff664a83fa90b685c5c7d1bb3a942e7c367f0d99170f957736",
+    "mode": "0664"
+  },
+  "verify-configure.log": {
+    "sha256": "7729f25a0a036c79f6724cecd679ac529229cdc44d4987d0993e92d85cdcdcb2",
+    "mode": "0664"
+  },
+  "verify-tests.log": {
+    "sha256": "e20a9b66da2fbc073fdbc294c415fc12cf88457098d3e5ccf15f364da123160d",
+    "mode": "0664"
+  }
+}

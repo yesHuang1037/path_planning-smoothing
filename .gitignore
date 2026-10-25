@@ -1,0 +1,9 @@
+/.agents/
+/.codex/
+/tdt-nav-kit/
+/artifacts/
+/transplant_ws/build*/
+/transplant_ws/install*/
+/transplant_ws/log*/
+__pycache__/
+*.pyc

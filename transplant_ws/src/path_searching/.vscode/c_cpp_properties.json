@@ -1,0 +1,29 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/hustrm/ros_aim_test/install/shooting_table_calib/include/**",
+        "/home/hustrm/ros_aim_test/install/tracker_solver/include/**",
+        "/home/hustrm/ros_aim_test/install/predictor/include/**",
+        "/home/hustrm/ros_aim_test/install/outpost_hitter/include/**",
+        "/home/hustrm/ros_aim_test/install/detector/include/**",
+        "/home/hustrm/ros_aim_test/install/gimbal_driver/include/**",
+        "/home/hustrm/ros_aim_test/install/auto_aim_common/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/hustrm/navigation/src/path_searching/include/**",
+        "include/**",
+        "/usr/include/**"
+      ],
+      "name": "ros2",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++17"
+    }
+  ],
+  "version": 4
+}

@@ -1,0 +1,4 @@
+free: 4 -> 2 points
+blocked: 3 -> 3 points
+cleared: 3 -> 2 points
+EXPORTED artifacts/T02/observations.svg

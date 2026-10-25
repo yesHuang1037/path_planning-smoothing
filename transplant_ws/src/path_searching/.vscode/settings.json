@@ -1,0 +1,25 @@
+{
+    "files.associations": {
+        "array": "cpp",
+        "bitset": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "utility": "cpp",
+        "functional": "cpp",
+        "chrono": "cpp",
+        "variant": "cpp"
+    },
+    "ROS2.distro": "humble",
+    "python.autoComplete.extraPaths": [
+        "/home/hustrm/ros_aim_test/install/gimbal_driver/local/lib/python3.10/dist-packages",
+        "/home/hustrm/ros_aim_test/install/auto_aim_common/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/hustrm/ros_aim_test/install/gimbal_driver/local/lib/python3.10/dist-packages",
+        "/home/hustrm/ros_aim_test/install/auto_aim_common/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}

@@ -1,0 +1,80 @@
+[  4%] Building CXX object CMakeFiles/path_searching_lib.dir/src/bucketedqueue.cpp.o
+[  8%] Building CXX object CMakeFiles/path_searching_lib.dir/src/Astar.cpp.o
+[ 12%] Building CXX object CMakeFiles/path_searching_lib.dir/src/dynamic_obstacle_manager.cpp.o
+[ 16%] Building CXX object CMakeFiles/path_searching_lib.dir/src/dynamicvoronoi.cpp.o
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/dynamicvoronoi.cpp: In member function ‘void navi_planner::DynamicVoronoi::visualize_screen(cv::Mat&)’:
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/dynamicvoronoi.cpp:529:27: warning: unused variable ‘c1’ [-Wunused-variable]
+  529 |             unsigned char c1 = (unsigned char)f1;
+      |                           ^~
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/dynamicvoronoi.cpp:530:27: warning: unused variable ‘c2’ [-Wunused-variable]
+  530 |             unsigned char c2 = (unsigned char)f2;
+      |                           ^~
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/dynamicvoronoi.cpp:531:27: warning: unused variable ‘c3’ [-Wunused-variable]
+  531 |             unsigned char c3 = (unsigned char)f3;
+      |                           ^~
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/dynamicvoronoi.cpp:472:23: warning: unused variable ‘c’ [-Wunused-variable]
+  472 |         unsigned char c = 0;
+      |                       ^
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/dynamicvoronoi.cpp: In member function ‘int navi_planner::DynamicVoronoi::findnearstVoronoi(int&, int&)’:
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/dynamicvoronoi.cpp:553:43: warning: overflow in conversion from ‘long int’ to ‘int’ changes value from ‘100000000000’ to ‘1215752192’ [-Woverflow]
+  553 |     int cnt = 0,bestx, besty, bestscore = 100000000000, first_cnt = 50, first_flag = -1;
+      |                                           ^~~~~~~~~~~~
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/dynamicvoronoi.cpp:553:9: warning: unused variable ‘cnt’ [-Wunused-variable]
+  553 |     int cnt = 0,bestx, besty, bestscore = 100000000000, first_cnt = 50, first_flag = -1;
+      |         ^~~
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/dynamicvoronoi.cpp:553:73: warning: unused variable ‘first_flag’ [-Wunused-variable]
+  553 |     int cnt = 0,bestx, besty, bestscore = 100000000000, first_cnt = 50, first_flag = -1;
+      |                                                                         ^~~~~~~~~~
+[ 20%] Building CXX object CMakeFiles/path_searching_lib.dir/src/esdf_map.cpp.o
+[ 25%] Building CXX object CMakeFiles/path_searching_lib.dir/src/path_safety_checker.cpp.o
+[ 29%] Building CXX object CMakeFiles/path_searching_lib.dir/src/path_simplifier.cpp.o
+[ 33%] Building CXX object CMakeFiles/path_searching_lib.dir/src/replan_coordinator.cpp.o
+[ 37%] Building CXX object CMakeFiles/path_searching_lib.dir/src/smoother.cpp.o
+In file included from /home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/smoother.cpp:2:
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/include/cubic_spline/cubic_spline_ros.h: In function ‘void GenTraj(const std::vector<Eigen::Matrix<double, 2, 1> >&, std::vector<Eigen::Matrix<double, 3, 1> >&, float)’:
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/include/cubic_spline/cubic_spline_ros.h:40:22: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<Eigen::Matrix<double, 2, 1> >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   40 |   for (int j = 0 ; j < path.size(); ++j) {
+      |                    ~~^~~~~~~~~~~~~
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/smoother.cpp: In member function ‘navi_planner::smoother::VV2D navi_planner::smoother::smooth(navi_planner::smoother::VV2D, double, double)’:
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/smoother.cpp:47:27: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<Eigen::Matrix<double, 2, 1> >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   47 |         for(int j = 0 ; j < newPath.size();j+=1)
+      |                         ~~^~~~~~~~~~~~~~~~
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/smoother.cpp:114:28: warning: unused variable ‘R_3’ [-Wunused-variable]
+  114 |                     double R_3 = pow(R_2,1.5);
+      |                            ^~~
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/smoother.cpp:74:34: warning: unused variable ‘next_node’ [-Wunused-variable]
+   74 |                 Eigen::Vector2d &next_node = Path_d_temp[j-1];
+      |                                  ^~~~~~~~~
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/smoother.cpp:75:34: warning: unused variable ‘last_node’ [-Wunused-variable]
+   75 |                 Eigen::Vector2d &last_node = Path_d_temp[j+1];
+      |                                  ^~~~~~~~~
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/smoother.cpp:33:16: warning: unused variable ‘Obs_thre’ [-Wunused-variable]
+   33 |         double Obs_thre = 10;
+      |                ^~~~~~~~
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/smoother.cpp: In member function ‘navi_planner::smoother::VV2D navi_planner::smoother::pathResampling(navi_planner::smoother::VV2D)’:
+/home/hustlyrm/path_planning_transplant/transplant_ws/src/path_searching/src/smoother.cpp:161:27: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<Eigen::Matrix<double, 2, 1> >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  161 |         for(int i = 2 ; i < path_input.size()-1; i++)
+      |                         ~~^~~~~~~~~~~~~~~~~~~~~
+[ 41%] Linking CXX static library libpath_searching_lib.a
+[ 41%] Built target path_searching_lib
+[ 45%] Building CXX object CMakeFiles/plan_manager.dir/src/plan_manager.cpp.o
+[ 50%] Building CXX object CMakeFiles/esdf_benchmark.dir/src/benchmark_esdf.cpp.o
+[ 54%] Linking CXX executable esdf_benchmark
+[ 54%] Built target esdf_benchmark
+[ 58%] Building CXX object CMakeFiles/path_simplifier_test.dir/test/path_simplifier_test.cpp.o
+[ 62%] Linking CXX executable path_simplifier_test
+[ 62%] Built target path_simplifier_test
+[ 66%] Building CXX object CMakeFiles/smoother_simplification_test.dir/test/smoother_simplification_test.cpp.o
+[ 70%] Linking CXX executable smoother_simplification_test
+[ 70%] Built target smoother_simplification_test
+[ 75%] Building CXX object CMakeFiles/replan_coordinator_periodic_test.dir/test/replan_coordinator_periodic_test.cpp.o
+[ 79%] Linking CXX executable replan_coordinator_periodic_test
+[ 79%] Built target replan_coordinator_periodic_test
+[ 83%] Building CXX object CMakeFiles/path_safety_checker_truncation_test.dir/test/path_safety_checker_truncation_test.cpp.o
+[ 87%] Linking CXX executable path_safety_checker_truncation_test
+[ 87%] Built target path_safety_checker_truncation_test
+[ 91%] Building CXX object CMakeFiles/astar_start_escape_test.dir/test/astar_start_escape_test.cpp.o
+[ 95%] Linking CXX executable astar_start_escape_test
+[ 95%] Built target astar_start_escape_test
+[100%] Linking CXX executable plan_manager
+[100%] Built target plan_manager

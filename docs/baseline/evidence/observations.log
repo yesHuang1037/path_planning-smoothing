@@ -1,0 +1,10 @@
+PASS straight path
+PASS blocked shortcut
+PASS corners, grid lines, endpoints and short segments
+PASS narrow corridor at 0.025m/0.1m (simplifier module only)
+PASS invalid parameters, inputs and environments
+PASS short paths, duplicates and zero tolerance
+PASS dynamic appearance/clearance and escape preservation
+PASS 160 seeded coverage cases against closed-cell intersection oracle
+PASS long path: 5000 -> 2, elapsed_ms=13.2891
+EXPORTED artifacts/T02/observations.csv
