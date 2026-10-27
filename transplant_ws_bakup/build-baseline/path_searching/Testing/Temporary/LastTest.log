@@ -1,0 +1,61 @@
+Start testing: Oct 24 23:13 CST
+----------------------------------------------------------
+1/3 Testing: replan_coordinator_periodic_test
+1/3 Test: replan_coordinator_periodic_test
+Command: "/home/hustlyrm/path_planning_transplant/transplant_ws/build-baseline/path_searching/replan_coordinator_periodic_test"
+Directory: /home/hustlyrm/path_planning_transplant/transplant_ws/build-baseline/path_searching
+"replan_coordinator_periodic_test" start time: Oct 24 23:13 CST
+Output:
+----------------------------------------------------------
+replan_coordinator_periodic_test passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"replan_coordinator_periodic_test" end time: Oct 24 23:13 CST
+"replan_coordinator_periodic_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/3 Testing: path_safety_checker_truncation_test
+2/3 Test: path_safety_checker_truncation_test
+Command: "/home/hustlyrm/path_planning_transplant/transplant_ws/build-baseline/path_searching/path_safety_checker_truncation_test"
+Directory: /home/hustlyrm/path_planning_transplant/transplant_ws/build-baseline/path_searching
+"path_safety_checker_truncation_test" start time: Oct 24 23:13 CST
+Output:
+----------------------------------------------------------
+path_safety_checker_truncation_test passed
+<end of output>
+Test time =   0.20 sec
+----------------------------------------------------------
+Test Passed.
+"path_safety_checker_truncation_test" end time: Oct 24 23:13 CST
+"path_safety_checker_truncation_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/3 Testing: astar_start_escape_test
+3/3 Test: astar_start_escape_test
+Command: "/home/hustlyrm/path_planning_transplant/transplant_ws/build-baseline/path_searching/astar_start_escape_test"
+Directory: /home/hustlyrm/path_planning_transplant/transplant_ws/build-baseline/path_searching
+"astar_start_escape_test" start time: Oct 24 23:13 CST
+Output:
+----------------------------------------------------------
+[INFO] [1792854801.084339840] [Astar]: lambda_heu:2.000000
+[INFO] [1792854801.084367790] [Astar]: allocate_num_:500000
+[INFO] [1792854801.084369977] [Astar]: obstacle_weight_:10.000000
+[INFO] [1792854801.084372572] [Astar]: dynamic_penalty_weight_:0.000000
+[INFO] [1792854801.084374435] [Astar]: min_clearance_cells_:3.000000
+[INFO] [1792854801.084376106] [Astar]: enable_start_escape_mode_:true
+[INFO] [1792854801.084377566] [Astar]: start_escape_steps_:8
+map size: 30 30
+[WARN] [1792854801.103009945] [Astar]: 起点栅格被占用，启用起点脱困模式：前 8 次扩展放宽碰撞/安全距离约束。
+[INFO] [1792854801.103643869] [Astar]: A* 搜索成功：迭代 93 次后到达终点
+astar_start_escape_test passed
+<end of output>
+Test time =   0.19 sec
+----------------------------------------------------------
+Test Passed.
+"astar_start_escape_test" end time: Oct 24 23:13 CST
+"astar_start_escape_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 24 23:13 CST

@@ -1,0 +1,4 @@
+replan_coordinator_periodic_test 1 0.00157195
+path_safety_checker_truncation_test 1 0.201664
+astar_start_escape_test 1 0.193335
+---

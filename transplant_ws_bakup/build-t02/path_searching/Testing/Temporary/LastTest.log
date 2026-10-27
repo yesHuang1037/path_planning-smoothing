@@ -1,0 +1,105 @@
+Start testing: Oct 24 23:44 CST
+----------------------------------------------------------
+1/5 Testing: path_simplifier_test
+1/5 Test: path_simplifier_test
+Command: "/home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching/path_simplifier_test"
+Directory: /home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching
+"path_simplifier_test" start time: Oct 24 23:44 CST
+Output:
+----------------------------------------------------------
+PASS straight path
+PASS blocked shortcut
+PASS corners, grid lines, endpoints and short segments
+PASS narrow corridor at 0.025m/0.1m (simplifier module only)
+PASS invalid parameters, inputs and environments
+PASS short paths, duplicates and zero tolerance
+PASS dynamic appearance/clearance and escape preservation
+PASS 160 seeded coverage cases against closed-cell intersection oracle
+PASS long path: 5000 -> 2, elapsed_ms=10.1342
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"path_simplifier_test" end time: Oct 24 23:44 CST
+"path_simplifier_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/5 Testing: smoother_simplification_test
+2/5 Test: smoother_simplification_test
+Command: "/home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching/smoother_simplification_test"
+Directory: /home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching
+"smoother_simplification_test" start time: Oct 24 23:44 CST
+Output:
+----------------------------------------------------------
+PASS default/explicit legacy preprocessing and smoothing equivalence
+PASS configuration, explicit failures, duplicates and retained spline integration
+PASS real ESDF collision and current PathSafetyChecker clearance reuse
+OBSERVE legacy points=5000->3 mean_ms=26.3003 repeats=30 (preprocessing only)
+OBSERVE tdt points=5000->2 mean_ms=9.98297 repeats=30 (preprocessing only)
+<end of output>
+Test time =   1.26 sec
+----------------------------------------------------------
+Test Passed.
+"smoother_simplification_test" end time: Oct 24 23:44 CST
+"smoother_simplification_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+3/5 Testing: replan_coordinator_periodic_test
+3/5 Test: replan_coordinator_periodic_test
+Command: "/home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching/replan_coordinator_periodic_test"
+Directory: /home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching
+"replan_coordinator_periodic_test" start time: Oct 24 23:44 CST
+Output:
+----------------------------------------------------------
+replan_coordinator_periodic_test passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"replan_coordinator_periodic_test" end time: Oct 24 23:44 CST
+"replan_coordinator_periodic_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/5 Testing: path_safety_checker_truncation_test
+4/5 Test: path_safety_checker_truncation_test
+Command: "/home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching/path_safety_checker_truncation_test"
+Directory: /home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching
+"path_safety_checker_truncation_test" start time: Oct 24 23:44 CST
+Output:
+----------------------------------------------------------
+path_safety_checker_truncation_test passed
+<end of output>
+Test time =   0.16 sec
+----------------------------------------------------------
+Test Passed.
+"path_safety_checker_truncation_test" end time: Oct 24 23:44 CST
+"path_safety_checker_truncation_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/5 Testing: astar_start_escape_test
+5/5 Test: astar_start_escape_test
+Command: "/home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching/astar_start_escape_test"
+Directory: /home/hustlyrm/path_planning_transplant/transplant_ws/build-t02/path_searching
+"astar_start_escape_test" start time: Oct 24 23:44 CST
+Output:
+----------------------------------------------------------
+[INFO] [1792856652.705576250] [Astar]: lambda_heu:2.000000
+[INFO] [1792856652.705600793] [Astar]: allocate_num_:500000
+[INFO] [1792856652.705602790] [Astar]: obstacle_weight_:10.000000
+[INFO] [1792856652.705605476] [Astar]: dynamic_penalty_weight_:0.000000
+[INFO] [1792856652.705606918] [Astar]: min_clearance_cells_:3.000000
+[INFO] [1792856652.705608005] [Astar]: enable_start_escape_mode_:true
+[INFO] [1792856652.705609166] [Astar]: start_escape_steps_:8
+map size: 30 30
+[WARN] [1792856652.724383756] [Astar]: 起点栅格被占用，启用起点脱困模式：前 8 次扩展放宽碰撞/安全距离约束。
+[INFO] [1792856652.725027746] [Astar]: A* 搜索成功：迭代 93 次后到达终点
+astar_start_escape_test passed
+<end of output>
+Test time =   0.20 sec
+----------------------------------------------------------
+Test Passed.
+"astar_start_escape_test" end time: Oct 24 23:44 CST
+"astar_start_escape_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 24 23:44 CST

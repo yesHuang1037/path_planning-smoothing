@@ -4,6 +4,7 @@
 
 - [首次探索记录](overview.md)：入口、依赖、模块调用、ROS 接口、已知边界与少数待澄清问题。
 - [算法与行为七问](algorithm-and-behavior-qa.md)：地图和 A* 代价、栅格坐标、抽点、距离场、安全检查、平滑及重规划。
+- [地图与重规划补充调查](runtime-map-and-replan-followup.md)：2026-10-27 沿用户实机脚本核对 odom_hyx 的地图分辨率、frame/origin、膨胀、增量接收与失败参考候选方案；仅静态调查。
 
 调查对象是 `/home/hustlyrm/source/navigation_ws/src/path_searching` 的本地工作树，不是 `transplant_ws/src/path_searching` 的后续移植实现。TDT 对照仅指本工作区 `tdt-nav-kit` 当前可读实现，不代表其他版本。
 

@@ -1,0 +1,6 @@
+path_simplifier_test 4 0.00579176
+smoother_simplification_test 4 0.315656
+replan_coordinator_periodic_test 4 0.000757697
+path_safety_checker_truncation_test 4 0.0403823
+astar_start_escape_test 4 0.0499656
+---
