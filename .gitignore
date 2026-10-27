@@ -2,8 +2,8 @@
 /.codex/
 /tdt-nav-kit/
 /artifacts/
-/transplant_ws/build*/
-/transplant_ws/install*/
-/transplant_ws/log*/
+/transplant_ws_backup/build*/
+/transplant_ws_backup/install*/
+/transplant_ws_backup/log*/
 __pycache__/
 *.pyc
