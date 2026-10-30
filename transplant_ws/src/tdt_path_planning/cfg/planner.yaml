@@ -1,0 +1,41 @@
+snapshot_planner:
+  ros__parameters:
+    # A 运行与输入：只发布私有调试话题，不连接 /sPath 或底盘；参数修改需重启。
+    enable_execution: false
+    static_only: false
+    global_frame: map
+    robot_frame: base_link
+    snapshot_file: ""
+    # 秒；仅用于调试输入筛选，不是执行许可或底层看门狗。
+    max_input_age_s: 0.5
+    max_start_drift_m: 0.05
+    # B 栅格：静态非零/-1均阻塞；动态 -1 或 >= 此阈值阻塞，窗口外保留静态层。
+    occupied_threshold: 65
+    # C 车体与净空，单位 m。中心到占据格面积距离须严格大于外接圆半径+余量。
+    body_length: 0.60
+    body_width: 0.60
+    clearance_margin: 0.08
+    # D 普通 A* 与碰撞感知化简；惩罚 = 边长*(1+weight/(1+净空/格宽))，weight 无量纲。
+    obstacle_weight: 0.10
+    # m，仅DP阶段的几何阈值；后续安全弦合并不承诺相对原折线仍在此偏差内。
+    simplify_epsilon: 0.10
+    search_budget_ms: 1000.0
+    max_search_expansions: 500000
+    # E 五次 minimum-jerk QP；分配速度 m/s、加速度 m/s²只用于段时长，不约束实车。
+    # 路标矩形半宽上限 m，不代表整段曲线天然处于安全走廊。
+    corridor_range: 0.30
+    allocation_speed: 0.20
+    allocation_acceleration: 0.20
+    min_segment_time: 0.05
+    qp_max_iterations: 20000
+    # 单轴QP时限 ms；总预算包含搜索/化简/优化/检测，不含栅格融合和距离场构建。
+    qp_budget_ms: 300.0
+    total_budget_ms: 3000.0
+    # F 检测：m；二阶导数误差上界计入净空，非允许穿障误差；超限失败，无降级路径。
+    max_chord: 0.05
+    curve_error: 0.001
+    max_refine_rounds: 6
+    max_control_points: 128
+    max_check_samples: 200000
+    # G 输出几何Path，m，非执行周期。最终输出折线另行碰撞检查。
+    output_spacing: 0.10

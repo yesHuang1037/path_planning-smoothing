@@ -7,3 +7,6 @@
 /transplant_ws_backup/log*/
 __pycache__/
 *.pyc
+/transplant_ws/build*/
+/transplant_ws/install*/
+/transplant_ws/log*/
