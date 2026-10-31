@@ -2,7 +2,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/path.hpp>
-#include <map_msgs/msg/occupancy_grid_update.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -13,6 +12,7 @@
 #include <iostream>
 #include <limits>
 #include <optional>
+#include <utility>
 
 namespace {
 class SnapshotPlanner : public rclcpp::Node {
@@ -53,33 +53,36 @@ public:
     status_ = create_publisher<std_msgs::msg::String>("~/status", rclcpp::QoS(1).transient_local());
     map_ = create_subscription<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::QoS(1).transient_local(),
       [this](nav_msgs::msg::OccupancyGrid::ConstSharedPtr message) {
-        base_.reset();
-        clearOutput();
-        try {base_ = convert(*message);} catch (const std::exception &error) {status(error.what());}
+        try {
+          auto grid = convert(*message);
+          base_ = std::move(grid);
+          base_error_.clear();
+        } catch (const std::exception &error) {
+          base_.reset();
+          base_error_ = std::string("static map rejected: ") + error.what();
+        }
       });
     dynamic_sub_ = create_subscription<nav_msgs::msg::OccupancyGrid>("/costmap/costmap",
       rclcpp::QoS(1).transient_local(), [this](nav_msgs::msg::OccupancyGrid::ConstSharedPtr message) {
         if (static_only_) return;
-        dynamic_.reset();
-        clearOutput();
         try {
-          dynamic_ = convert(*message);
+          auto grid = convert(*message);
+          const rclcpp::Time stamp(message->header.stamp);
+          dynamic_ = std::move(grid);
           dynamic_received_ = tdt::Clock::now();
-          dynamic_stamp_ = rclcpp::Time(message->header.stamp);
-        } catch (const std::exception &error) {status(error.what());}
-      });
-    updates_ = create_subscription<map_msgs::msg::OccupancyGridUpdate>("/costmap/costmap_updates", 10,
-      [this](map_msgs::msg::OccupancyGridUpdate::ConstSharedPtr) {
-        if (static_only_) return;
-        dynamic_.reset();
-        clearOutput();
-        status("costmap increment has no base generation: waiting for full map");
+          dynamic_stamp_ = stamp;
+          dynamic_error_.clear();
+        } catch (const std::exception &error) {
+          dynamic_.reset();
+          dynamic_error_ = std::string("dynamic map rejected: ") + error.what();
+        }
       });
     goal_ = create_subscription<geometry_msgs::msg::PoseStamped>("/goal_pose", 1,
       [this](geometry_msgs::msg::PoseStamped::ConstSharedPtr message) {
         ++generation_;
         pending_ = *message;
         clearOutput();
+        status("goal received: previous result cleared");
       });
     timer_ = create_wall_timer(std::chrono::milliseconds(20), [this] {poll();});
     parameter_guard_ = add_on_set_parameters_callback([](const auto &) {
@@ -110,12 +113,36 @@ private:
     grid.validate();
     return grid;
   }
-  bool fresh() const {
-    if (static_only_) return true;
-    if (!dynamic_ || std::chrono::duration<double>(tdt::Clock::now() - dynamic_received_).count() > max_age_)
-      return false;
+  struct InputState {
+    std::string reason;
+    std::string detail;
+  };
+  InputState inputState() const {
+    if (!base_) return {base_error_, ""};
+    if (static_only_) return {};
+    if (!dynamic_) return {dynamic_error_, ""};
+    const double received_age = std::chrono::duration<double>(tdt::Clock::now() - dynamic_received_).count();
+    if (received_age > max_age_)
+      return {"dynamic receive age exceeded", "; receive_age_s=" + std::to_string(received_age) +
+        "; max_age_s=" + std::to_string(max_age_) + "; clock=steady"};
+    if (dynamic_stamp_.nanoseconds() == 0) return {"dynamic timestamp is zero", "; clock=ROS"};
     const double age = (now() - dynamic_stamp_).seconds();
-    return dynamic_stamp_.nanoseconds() != 0 && age >= -0.05 && age <= max_age_;
+    const std::string detail = "; stamp_age_s=" + std::to_string(age) +
+      "; allowed_age_s=[-0.05," + std::to_string(max_age_) + "]; clock=ROS";
+    if (age < -0.05) return {"dynamic timestamp is in future", detail};
+    if (age > max_age_) return {"dynamic timestamp age exceeded", detail};
+    return {};
+  }
+  void reportInputState() {
+    const auto state = inputState();
+    if (state.reason == last_input_reason_) return;
+    last_input_reason_ = state.reason;
+    if (state.reason.empty()) {
+      RCLCPP_INFO(get_logger(), "map inputs ready; no automatic replanning");
+    } else {
+      RCLCPP_WARN(get_logger(), "map input unavailable: %s%s; any displayed result is historical",
+        state.reason.c_str(), state.detail.c_str());
+    }
   }
   void status(const std::string &text) {
     std_msgs::msg::String message;
@@ -163,13 +190,17 @@ private:
   }
   void clearOutput() {publish(raw_, {}); publish(simplified_, {}); publish(optimized_, {}); publishCorridors({});}
   void poll() {
+    reportInputState();
     if (work_.valid()) {
       if (work_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
       try {
         const auto result = work_.get();
-        if (running_generation_ != generation_ || !base_ || !fresh()) {
-          status("discarded stale result: explicit new goal required");
-        } else {
+        if (running_generation_ == generation_) {
+          const auto inputs = inputState();
+          if (!inputs.reason.empty())
+            throw std::runtime_error("result rejected: " + inputs.reason + inputs.detail + "; new goal required");
+          if (!result.success)
+            throw std::runtime_error("planning failed: " + result.reason + "; new goal required");
           const auto validation_begin = tdt::Clock::now();
           const auto transform = buffer_.lookupTransform(frame_, robot_frame_, tf2::TimePointZero);
           const rclcpp::Time stamp(transform.header.stamp);
@@ -178,13 +209,13 @@ private:
           const tdt::Point current(transform.transform.translation.x, transform.transform.translation.y);
           if (!current.allFinite() || (current - running_start_).norm() > max_start_drift_)
             throw std::runtime_error("start moved; explicit new goal required");
-          if (result.success) {
-            const tdt::Environment latest(*base_, static_only_ ? nullptr : &*dynamic_, config_);
-            if (!latest.pathSafe(result.path)) throw std::runtime_error("latest map rejects candidate path");
-          }
+          const tdt::Environment latest(*base_, static_only_ ? nullptr : &*dynamic_, config_);
+          if (!latest.pathSafe(result.path)) throw std::runtime_error("latest map rejects candidate path");
           if (std::chrono::duration<double, std::milli>(tdt::Clock::now() - validation_begin).count() +
             result.total_ms > config_.total_budget_ms) throw std::runtime_error("final validation budget exceeded");
-          if (!fresh()) throw std::runtime_error("input expired during final validation");
+          const auto final_inputs = inputState();
+          if (!final_inputs.reason.empty())
+            throw std::runtime_error("result rejected: " + final_inputs.reason + final_inputs.detail);
           publish(raw_, result.raw);
           publish(simplified_, result.simplified);
           publish(optimized_, result.path);
@@ -192,13 +223,17 @@ private:
           status(result.reason + "; qp_solves=" + std::to_string(result.qp_solves) +
             "; total_ms=" + std::to_string(result.total_ms));
         }
-      } catch (const std::exception &error) {status(error.what());}
+      } catch (const std::exception &error) {
+        if (running_generation_ == generation_) status(error.what());
+      }
     }
     if (!pending_) return;
     const auto goal = *pending_;
     pending_.reset();
     try {
-      if (!base_ || !fresh()) throw std::runtime_error("map/costmap missing or stale; new goal required");
+      const auto inputs = inputState();
+      if (!inputs.reason.empty())
+        throw std::runtime_error("goal rejected: " + inputs.reason + inputs.detail + "; new goal required");
       if (goal.header.frame_id != frame_) throw std::invalid_argument("goal must use global_frame");
       const auto transform = buffer_.lookupTransform(frame_, robot_frame_, tf2::TimePointZero);
       const rclcpp::Time stamp(transform.header.stamp);
@@ -225,6 +260,9 @@ private:
   tdt::Config config_;
   bool static_only_;
   std::string snapshot_file_, frame_, robot_frame_;
+  std::string base_error_ = "static map not received";
+  std::string dynamic_error_ = "dynamic full map not received";
+  std::string last_input_reason_;
   double max_age_, max_start_drift_;
   tdt::Point running_start_ = tdt::Point::Zero();
   std::optional<tdt::Grid> base_, dynamic_;
@@ -236,7 +274,6 @@ private:
   tf2_ros::Buffer buffer_;
   tf2_ros::TransformListener listener_;
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr map_, dynamic_sub_;
-  rclcpp::Subscription<map_msgs::msg::OccupancyGridUpdate>::SharedPtr updates_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr raw_, simplified_, optimized_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr status_;

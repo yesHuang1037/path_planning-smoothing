@@ -1,5 +1,6 @@
 #include "tdt_path_planning/core.hpp"
 #include <gtest/gtest.h>
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -101,6 +102,31 @@ TEST(Fusion, FineToCoarseThreshold) {
   local.cells[0] = 65;
   const tdt::Environment blocked(base, &local, {});
   EXPECT_TRUE(blocked.occupied(1, 1));
+}
+TEST(Fusion, FullSnapshotCopyAndLatestMapValidation) {
+  tdt::Snapshot snapshot;
+  snapshot.base = grid();
+  snapshot.dynamic = grid();
+  snapshot.has_dynamic = true;
+  snapshot.start = {1, 1};
+  snapshot.goal = {6, 4};
+  const auto frozen = snapshot;
+  std::fill(snapshot.dynamic.cells.begin(), snapshot.dynamic.cells.end(), 100);
+  const tdt::Environment original(frozen.base, &frozen.dynamic, frozen.config);
+  const auto result = tdt::plan(original, frozen.start, frozen.goal);
+  ASSERT_TRUE(result.success) << result.reason;
+  EXPECT_FALSE(result.raw.empty());
+  EXPECT_FALSE(result.simplified.empty());
+  EXPECT_FALSE(result.corridors.empty());
+  ASSERT_GT(result.path.size(), 1u);
+  EXPECT_EQ(result.path.front(), frozen.start);
+  EXPECT_EQ(result.path.back(), frozen.goal);
+  EXPECT_TRUE(original.pathSafe(result.path));
+  const tdt::Environment latest(snapshot.base, &snapshot.dynamic, snapshot.config);
+  EXPECT_FALSE(latest.pathSafe(result.path));
+  snapshot.dynamic = grid();
+  const tdt::Environment restored(snapshot.base, &snapshot.dynamic, snapshot.config);
+  EXPECT_TRUE(restored.pathSafe(result.path));
 }
 TEST(Distance, ConservativeAgainstAreaOracleAndLifecycle) {
   std::mt19937 random(42);
@@ -246,6 +272,9 @@ TEST(Optimizer, LimitsFailClosed) {
   const tdt::Environment environment(grid(), nullptr, config);
   const auto failed = tdt::plan(environment, {1, 1}, {6, 4});
   EXPECT_FALSE(failed.success); EXPECT_TRUE(failed.path.empty());
+  EXPECT_FALSE(failed.raw.empty());
+  EXPECT_FALSE(failed.simplified.empty());
+  EXPECT_GT(failed.qp_solves, 0);
   config = {}; config.max_check_samples = 2;
   const tdt::Environment tiny(grid(), nullptr, config);
   const auto limited = tdt::plan(tiny, {1, 1}, {6, 4});

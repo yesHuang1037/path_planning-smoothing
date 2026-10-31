@@ -6,14 +6,15 @@ snapshot_planner:
     global_frame: map
     robot_frame: base_link
     snapshot_file: ""
-    # 秒；仅用于调试输入筛选，不是执行许可或底层看门狗。
+    # 秒；完整动态图的接收年龄、消息时间戳及 TF 时效限制；增量不参与更新。
+    # 仅用于调试输入筛选，不是执行许可；勿为适配低频完整图而连带放宽 TF。
     max_input_age_s: 0.5
     max_start_drift_m: 0.05
     # B 栅格：静态非零/-1均阻塞；动态 -1 或 >= 此阈值阻塞，窗口外保留静态层。
     occupied_threshold: 65
     # C 车体与净空，单位 m。中心到占据格面积距离须严格大于外接圆半径+余量。
-    body_length: 0.60
-    body_width: 0.60
+    body_length: 0.0005
+    body_width: 0.0005
     clearance_margin: 0.08
     # D 普通 A* 与碰撞感知化简；惩罚 = 边长*(1+weight/(1+净空/格宽))，weight 无量纲。
     obstacle_weight: 0.10
@@ -24,8 +25,8 @@ snapshot_planner:
     # E 五次 minimum-jerk QP；分配速度 m/s、加速度 m/s²只用于段时长，不约束实车。
     # 路标矩形半宽上限 m，不代表整段曲线天然处于安全走廊。
     corridor_range: 0.30
-    allocation_speed: 0.20
-    allocation_acceleration: 0.20
+    allocation_speed: 5.0
+    allocation_acceleration: 1.50
     min_segment_time: 0.05
     qp_max_iterations: 20000
     # 单轴QP时限 ms；总预算包含搜索/化简/优化/检测，不含栅格融合和距离场构建。
